@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbs.core.dao.MenuMapper">
+
+    <resultMap type="com.bbs.core.entity.Menu" id="TblMenuMap">
+        <result property="menuId" column="menu_id" jdbcType="INTEGER"/>
+        <result property="menuname" column="menuname" jdbcType="VARCHAR"/>
+        <result property="identifier" column="identifier" jdbcType="VARCHAR"/>
+        <result property="menuIcon" column="menu_icon" jdbcType="VARCHAR"/>
+        <result property="menuUrl" column="menu_url" jdbcType="VARCHAR"/>
+        <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
+        <result property="isMenu" column="is_menu" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!-- 查询全部菜单 -->
+    <select id="selectAll" resultType="com.bbs.core.entity.Menu">
+        select menu_id, menuname, identifier, menu_icon, menu_url, parent_id,is_menu from tbl_menu
+    </select>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="TblMenuMap">
+        select
+          menu_id, menuname, identifier, menu_icon, menu_url, parent_id,is_menu
+        from db_rbac.tbl_menu
+        where menu_id = #{menuId}
+    </select>
+
+    <!-- 根据权限ID动态获取左侧菜单 -->
+    <select id="queryAllByMenuId"  resultType="com.bbs.core.entity.Menu">
+        SELECT m.* from tbl_user as u
+        INNER JOIN tbl_user_role as ur on u.user_id = ur.user_id
+        INNER JOIN tbl_role as r on r.role_id = ur.role_id
+        INNER JOIN tbl_role_menu as rm on rm.role_id = r.role_id
+        INNER JOIN tbl_menu as m on m.menu_id = rm.menu_id
+        where u.user_id = #{userId}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="TblMenuMap">
+        select
+          menu_id, menuname, identifier, menu_icon, menu_url, parent_id,is_menu
+        from db_rbac.tbl_menu
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="TblMenuMap">
+        select
+          menu_id, menuname, identifier, menu_icon, menu_url, parent_id,is_menu
+        from db_rbac.tbl_menu
+        <where>
+            <if test="menuId != null">
+                and menu_id = #{menuId}
+            </if>
+            <if test="menuname != null and menuname != ''">
+                and menuname = #{menuname}
+            </if>
+            <if test="identifier != null and identifier != ''">
+                and identifier = #{identifier}
+            </if>
+            <if test="menuIcon != null and menuIcon != ''">
+                and menu_icon = #{menuIcon}
+            </if>
+            <if test="menuUrl != null and menuUrl != ''">
+                and menu_url = #{menuUrl}
+            </if>
+            <if test="parentId != null">
+                and parent_id = #{parentId}
+            </if>
+            <if test="isMenu != null">
+                and is_menu = #{isMenu}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="menuId" useGeneratedKeys="true">
+        insert into db_rbac.tbl_menu(menuname, identifier, menu_icon, menu_url, parent_id, is_menu)
+        values (#{menuname}, #{identifier}, #{menuIcon}, #{menuUrl}, #{parentId}, #{isMenu})
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update db_rbac.tbl_menu
+        <set>
+            <if test="menuname != null and menuname != ''">
+                menuname = #{menuname},
+            </if>
+            <if test="identifier != null and identifier != ''">
+                identifier = #{identifier},
+            </if>
+            <if test="menuIcon != null and menuIcon != ''">
+                menu_icon = #{menuIcon},
+            </if>
+            <if test="menuUrl != null and menuUrl != ''">
+                menu_url = #{menuUrl},
+            </if>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="isMenu != null">
+                is_menu = #{isMenu},
+            </if>
+        </set>
+        where menu_id = #{menuId}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from db_rbac.tbl_menu where menu_id = #{menuId}
+    </delete>
+
+</mapper>

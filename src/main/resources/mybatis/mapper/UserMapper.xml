@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbs.core.dao.UserMapper">
+
+    <resultMap type="com.bbs.core.entity.UserInfo" id="UserInfoAndRoleField">
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="username" column="username" jdbcType="VARCHAR"/>
+        <result property="realname" column="realname" jdbcType="VARCHAR"/>
+        <result property="accountnonexpired" column="accountNonExpired" jdbcType="INTEGER"/>
+        <result property="accountnonlocked" column="accountNonLocked" jdbcType="INTEGER"/>
+        <result property="credentialsnonexpired" column="credentialsNonExpired" jdbcType="INTEGER"/>
+        <result property="enabled" column="enabled" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="lastTime" column="last_time" jdbcType="TIMESTAMP"/>
+
+        <!-- 映射角色 -->
+        <collection property="roles" resultMap="baseRoleMap" ofType="com.bbs.core.entity.Role" />
+
+    </resultMap>
+
+    <!-- 抽离角色字段 -->
+    <resultMap id="baseRoleMap" type="com.bbs.core.entity.Role">
+        <id property="roleId" column="role_id" />
+        <result property="roleName" column="role_name" />
+    </resultMap>
+
+
+    <!-- 根据用户名查询该用户是否存在 -->
+    <select id="queryByUsername" resultType="com.bbs.core.entity.UserInfo">
+        select
+          user_id, username, password, realname, create_time, last_time, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled
+        from db_rbac.tbl_user
+        where username = #{username}
+    </select>
+
+    <!-- 根据用户名查询所有该用户的权限 -->
+    <select id="queryMenuByUsername" parameterType="string" resultType="com.bbs.core.entity.Menu">
+        SELECT m.* from tbl_user as u
+        INNER JOIN tbl_user_role as ur on u.user_id = ur.user_id
+        INNER JOIN tbl_role_menu as rm on ur.role_id = rm.role_id
+        INNER JOIN tbl_menu as m on m.menu_id = rm.menu_id
+        WHERE u.username = #{username}
+    </select>
+
+    <!-- 查询全部系统用户带角色的信息 -->
+    <select id="queryByPage" resultMap="UserInfoAndRoleField">
+        SELECT
+            u.user_id,
+            u.username,
+            u.realname,
+            u.accountNonExpired,
+            u.accountNonLocked,
+            u.credentialsNonExpired,
+            u.enabled,
+            r.role_id,
+            r.role_name,
+            u.create_time,
+            u.last_time
+        FROM
+            tbl_user AS u
+            INNER JOIN tbl_user_role AS ur ON ur.user_id = u.user_id
+            INNER JOIN tbl_role AS r ON r.role_id = ur.role_id
+            <where>
+                1 = 1
+                <if test='"" != username and username != null'>
+                    and u.username = #{username}
+                </if>
+                <if test='"" != createTime and createTime != null'>
+                    and u.create_time = #{createTime}
+                </if>
+                <if test="pageHepler.page != null and pageHepler.limit != null">
+                    limit #{pageHepler.page},#{pageHepler.limit}
+                </if>
+                <if test="pageHepler.page == null and pageHepler.limit != null">
+                    limit #{pageHepler.limit}
+                </if>
+            </where>
+    </select>
+
+    <!-- 总记录数 -->
+    <select id="count" resultType="java.lang.Integer">
+        select count(1) from tbl_user
+        <where>
+            1 = 1
+            <if test='"" != username and username != null'>
+                and username = #{username}
+            </if>
+            <if test='"" != createTime and createTime != null'>
+                and create_time = #{createTime}
+            </if>
+        </where>
+    </select>
+
+
+    <!-- 修改密码 -->
+    <update id="updatePassword">
+        update tbl_user
+        set password=#{newpassword}
+        where user_id = #{userId}
+    </update>
+
+    <!--查询单个-->
+    <select id="queryById"  resultMap="UserInfoAndRoleField">
+          SELECT
+            u.user_id,
+            u.username,
+            u.realname,
+            u.accountNonExpired,
+            u.accountNonLocked,
+            u.credentialsNonExpired,
+            u.enabled,
+            r.role_id,
+            r.role_name,
+            u.create_time,
+            u.last_time
+        FROM
+            tbl_user AS u
+            INNER JOIN tbl_user_role AS ur ON ur.user_id = u.user_id
+            INNER JOIN tbl_role AS r ON r.role_id = ur.role_id
+        where u.user_id = #{userId}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultType="com.bbs.core.entity.UserInfo">
+        select
+          user_id, username, password, realname, create_time, last_time, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled
+        from db_rbac.tbl_user
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultType="com.bbs.core.entity.UserInfo">
+        select
+          user_id, username, password, realname, create_time, last_time, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled
+        from db_rbac.tbl_user
+        <where>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="username != null and username != ''">
+                and username = #{username}
+            </if>
+            <if test="password != null and password != ''">
+                and password = #{password}
+            </if>
+            <if test="realname != null and realname != ''">
+                and realname = #{realname}
+            </if>
+            <if test="createTime != null">
+                and create_time = #{createTime}
+            </if>
+            <if test="lastTime != null">
+                and last_time = #{lastTime}
+            </if>
+            <if test="accountnonexpired != null">
+                and accountNonExpired = #{accountnonexpired}
+            </if>
+            <if test="accountnonlocked != null">
+                and accountNonLocked = #{accountnonlocked}
+            </if>
+            <if test="credentialsnonexpired != null">
+                and credentialsNonExpired = #{credentialsnonexpired}
+            </if>
+            <if test="enabled != null">
+                and enabled = #{enabled}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="userId" useGeneratedKeys="true">
+        insert into db_rbac.tbl_user(username, password, realname, create_time, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled)
+        values (#{username}, #{password}, #{realname}, NOW(), #{accountnonexpired}, #{accountnonlocked}, #{credentialsnonexpired}, #{enabled})
+    </insert>
+
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update db_rbac.tbl_user
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="realname != null and realname != ''">
+                realname = #{realname},
+            </if>
+            last_time = NOW(),
+            <if test="accountnonexpired != null">
+                accountNonExpired = #{accountnonexpired},
+            </if>
+            <if test="accountnonlocked != null">
+                accountNonLocked = #{accountnonlocked},
+            </if>
+            <if test="credentialsnonexpired != null">
+                credentialsNonExpired = #{credentialsnonexpired},
+            </if>
+            <if test="enabled != null">
+                enabled = #{enabled}
+            </if>
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from db_rbac.tbl_user where user_id = #{userId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/security
+       https://www.springframework.org/schema/security/spring-security.xsd">
+
+    <security:http >
+
+        <security:intercept-url pattern="/favicon.ico" access="permitAll()" />
+        <security:intercept-url pattern="/static/**" access="permitAll()" />
+        <security:intercept-url pattern="/css/**" access="permitAll()" />
+        <security:intercept-url pattern="/js/**" access="permitAll()" />
+        <security:intercept-url pattern="/images/**" access="permitAll()" />
+        <security:intercept-url pattern="/login.html" access="permitAll()" />
+        <security:intercept-url pattern="/verifyCode" access="permitAll()" />
+        <security:intercept-url pattern="/**" access="isFullyAuthenticated()" />
+
+        <!-- 关闭CSF安全防护机制 -->
+        <security:csrf disabled="true" />
+
+        <security:headers>
+            <security:frame-options disabled="true" />
+        </security:headers>
+
+        <!-- 自定义登录表单 -->
+        <security:form-login
+                login-page="/login.html"
+                login-processing-url="/login"
+                username-parameter="username"
+                password-parameter="password"
+                authentication-success-forward-url="/home.html"
+                authentication-success-handler-ref="authenticationSuccessHandler"
+                authentication-failure-handler-ref="authenticationFailureHandler"
+        />
+
+        <!-- 自定义无权限页面 -->
+        <security:access-denied-handler error-page="/error.html" />
+
+        <!-- 自定义过滤器,在登录之前做拦截 -->
+        <security:custom-filter ref="verifyCodeAuthenticationFilter" before="FORM_LOGIN_FILTER" />
+
+        <!-- 注入记住我,token-validity-seconds:有效时间（单位秒） -->
+        <security:remember-me token-validity-seconds="3600" token-repository-ref="jdbcTokenRepository" />
+
+        <!-- 注入退出 -->
+        <security:logout logout-url="/logout" logout-success-url="/login.html" delete-cookies="JSESSIONID" invalidate-session="true" />
+
+    </security:http>
+
+    <!-- 认证管理器：认证信息提供方式（账户名，密码，当前用户权限） -->
+    <security:authentication-manager>
+        <!-- 认证信息提供者 -->
+        <security:authentication-provider user-service-ref="userServiceImpl">
+            <!-- 注入密码匹配器 -->
+            <security:password-encoder ref="passwordEncoder" />
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <!-- 配置登录成功和失败处理 -->
+    <bean id="authenticationSuccessHandler" class="com.bbs.security.handler.AuthenticationSuccessHandlerImpl" />
+    <bean id="authenticationFailureHandler" class="com.bbs.security.handler.AuthenticationFailureHandlerImpl" />
+
+    <!-- 配置图片验证码过滤器 -->
+    <bean id="verifyCodeAuthenticationFilter" class="com.bbs.security.filter.VerifyCodeAuthenticationFilter">
+        <property name="authenticationFailureHandler" ref="authenticationFailureHandler" />
+    </bean>
+
+    <!-- 配置密码加密 -->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+    <!-- 配置记住我 -->
+    <bean id="jdbcTokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <!-- 关联数据库 -->
+        <property name="dataSource" ref="dataSource" />
+        <!-- 首次设置为true,程序启动时会在数据库创建一张专门存储RemeberMe的表 -->
+        <property name="createTableOnStartup" value="false" />
+    </bean>
+
+</beans>

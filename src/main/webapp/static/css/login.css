@@ -1,0 +1,61 @@
+/* 登录 */
+.login-page {
+    background-color: #eee;
+    width: calc(100vm);
+    height: calc(100vh);
+    color: #ccc;
+}
+
+.header {
+    width: calc(100vm);
+    height: 150px;
+}
+
+.main {
+    width: calc(100vm);
+    height: calc(65vh);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.main .login-wrapper {
+    width: 335px;
+    height: 340px;
+    background-color: #f2f2f2;
+    padding: 20px;
+}
+
+.main .login-wrapper h1 {
+    color: #000;
+    text-align: center;
+}
+
+.main .login-wrapper #loginForm {
+    position: relative;
+    margin-top: 30px;
+}
+
+.main .login-wrapper #loginForm .codeimg {
+    width: 130px;
+    height: 36px;
+    cursor: pointer;
+}
+
+/* 图标 */
+.rbac_login_input_icon {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    font-size: 18px;
+}
+
+.rbac_login_vercode_icon {
+    line-height: 35px;
+    padding-left: 30px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+
+
